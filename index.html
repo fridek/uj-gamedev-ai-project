@@ -40,19 +40,11 @@
       <div>
         <h3>Mapa</h3>
         <p>
-          Mapa gry jest tablicą o rozmiarach X x Y. Punkt (0,0) znajduje się w lewym górnym rogu mapy.
+          Mapa gry jest ma wymiary X x Y. Punkt (0,0) znajduje się w lewym górnym rogu mapy.
           <figure>
             <img src="images/axis.png" alt="oznaczenia osi mapy" />
           </figure>
-          Reprezentowana jest przez wartości liczbowe kodujące obiekt znajdujący się na danym polu:
-          
-          <ul>
-            <li>0 - pole puste</li>
-            <li>1 - ściana</li>
-            <li>2 - gracz</li>
-            <li>10 - apteczka do zebrania</li>
-            <li>11-12 - broń do zebrania</li>
-          </ul>
+          Mapa składa się ze zbioru odcinków i pozycji broni oraz apteczek do zebrania.
           
           Rozmiar planszy jest wysyłany do gracza w pakiecie inicjalizującym. Plansza jest przesyłana w całości tylko raz, z uwzględnieniem pola widzenia graczy.
         </p>
@@ -62,12 +54,21 @@
           <ul>
             <li>Zdrowie (0-100)</li>
             <li>Pozycję</li>
-            <li>Kierunek ruchu - (0,0) jeśli nie porusza się</li>
-            <li>Kierunek obrotu - kąt w stopniach, liczony prawoskrętnie od wektora (-1,0)</li>
+            <li>Kierunek ruchu - (0,0) jeśli nie porusza się, ruch w ośmiu kierunkach względem kierunku obrotu</li>
+            <li>Kierunek obrotu - kąt w stopniach, liczony prawoskrętnie od wektora (0,-1)</li>
             <li>Poziom amunicji do 3 broni</li>
+            <li>Zawodnik porusza się z prędkością 1 jednostki na klatkę gry. Pozycja zawodnika jest liczona w sposób ciągły z dokładnością do float.</li>
           </ul>
           
-          Początkowy poziom amunicji jest wysyłany do gracza w pakiecie inicjalizującym.
+          Początkowy poziom amunicji jest wysyłany do gracza w pakiecie inicjalizującym.<br />
+          
+	  Promienie obiektów w grze wynoszą:
+	  <ul>
+		<li>Gracz - 0.5j</i>
+		<li>Pocisk - 0.2j</li>
+		<li>Amunicja, apteczka - 0.5j</li>
+	  </ul>
+
         </p>
       </div>
       
@@ -80,15 +81,13 @@
                 <tr><th>typ</th><th>damage</th><th>zasięg</th><th>prędkość ognia</th><th>amunicja</th><th>prędkość naboju</th></tr>
               </thead>
               <tbody>
-                <tr><td>laser</td><td>low</td><td>?</td><td>&#8734;</td><td>&#8734;</td><td>&#8734;</td></tr>
-                <tr><td>pistol</td><td>medium</td><td>&#8734;</td><td>?/s</td><td>?</td><td>?</td></tr>
-                <tr><td>RPG</td><td>over 9000</td><td>&#8734;</td><td>?/s</td><td>?</td><td>?</td></tr>
+                <tr><td>laser</td><td>20/s</td><td>10 j</td><td>&#8734;</td><td>&#8734;</td><td>&#8734;</td></tr>
+                <tr><td>pistol</td><td>10</td><td>&#8734;</td><td>0.25/klatkę</td><td>5*ilość graczy</td><td>1/klatkę</td></tr>
+                <tr><td>RPG</td><td>30</td><td>&#8734;</td><td>0.1/klatkę</td><td>0.5*ilość graczy</td><td>0.5/klatkę</td></tr>
               </tbody>
             </table>
           </li>
-          <li>Armor ?</li>
           <li>Parametry apteczek</li>
-          <li>Parametry broni</li>
         </ol>
       </div>
     </section> <!--end section-->
@@ -148,8 +147,8 @@
         <pre class="brush: js">
           {
             map_size:           [int, int],       // rozmiar mapy X,Y
-            map:                [[int,...],...],  // tablica intów [X][Y], według specyfikacji
-            position:           [int, int],       // pozycja gracza
+            map:                [[float,float,float,float],...],  // tablica linii [[x1,y1,x2,y2], ...]
+            position:           [float, float],   // pozycja gracza
             ammo:               [int, int],       // ammo [pistol, RPG]
             current_timestamp:  int,              // aktualny czas serwera
             start_timestamp:    int               // czas rozpoczęcia
@@ -160,7 +159,8 @@
         
         <pre class="brush: js">
           {
-            start: true
+            start: true,
+            current_timestamp:  int,              // aktualny czas serwera
           }
         </pre>          
       <header>
@@ -170,8 +170,8 @@
         <h3>Komendy gracz &rArr; serwer</h3>
         <pre class="brush: js">
           {
-            direction: [float, float], // (opt) wektor normalny kierunku, [0,0] dla stop
-            rotation:  float,          // (opt) obrót
+            direction: [float, float], // (opt) wektor kierunku, [0,0] dla stop, [1,0], [-1,1], etc. dla ruchu
+            rotation:  float,          // (opt) zmiana obrotu w zakresie od -30 do +30 stopni 
             fire:      int,            // (opt) id broni
             tick:      int             // numer klatki w czasie której zostaje nadany pakiet (wykrywanie opóźnień)
           }
@@ -180,22 +180,29 @@
         <h3>Komendy gracz &lArr; serwer</h3>
         <pre class="brush: js">
           {
-            players: [ // w zasięgu wzroku
+            players: [ // globalne - bot ma sam liczyć co widzi
               {
-                position: [int, int],
+                position: [float, float], // wektor kierunku względem wektora obrotu
+                rotation:  float,         // obrót względem wektora (0,-1)
                 health:   int,
                 id:       int
               },
               ...
             ],
-            powerups: [ // w zasięgu wzroku
+            powerups: [ // globalne - bot ma sam liczyć co widzi
               {
-                position: [int, int],
+                position: [float, float],
                 type:     int,    // ENUM 1 - apteczka, 2 - pistol ammo, 3 - RPG ammo
               },
               ...
             ],
-            hits: [ // globalne/w zasięgu wzroku?
+            shooting: [ // globalne - bot ma sam liczyć co widzi
+              {
+                player_id:  int,
+                weapon_id:  int   // ENUM 1 - laser, 2 - pistol, 3 - RPG
+              },            
+            ],
+            hits: [ // globalne
               {
                 player_id:  int,
                 weapon_id:  int   // ENUM 1 - laser, 2 - pistol, 3 - RPG
