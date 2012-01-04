@@ -5,13 +5,13 @@ using namespace std;
 
 NodejsClient *client; //, *client2;
 
-void handleMessage(char* a, int size) {
-    cout << "got a message (" << size << ") " << a << endl;
+void handleMessage(char* a) {
+    cout << "got a message (" << 0 << ") " << a << endl;
 };
 
-int main( int argc, char * argv [] )
+int main( int argc, char *argv [] )
 {
-    client = new NodejsClient("127.0.0.1", "1337");
+    client = new NodejsClient("127.0.0.1", "1338", "1337");
     client->registerMessageHandler(&handleMessage);
     client->run();
 

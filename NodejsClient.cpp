@@ -6,17 +6,25 @@ using namespace std;
  * @param Server_Name hostname or IP
  * @param Server_Port port number
  */
-NodejsClient::NodejsClient(std::string Server_Name = "127.0.0.1", std::string Server_Port = "1337") : 
-    resolver(io_service), sock(io_service) {
+NodejsClient::NodejsClient(std::string Server_Name, std::string Server_Port_Out, std::string Server_Port_In) : 
+    resolver(io_service), sock_in(io_service), sock_out(io_service) {
+    counter = 0;
+    boost::asio::ip::tcp::resolver::query query_in(Server_Name, Server_Port_In);
+    boost::asio::ip::tcp::resolver::query query_out(Server_Name, Server_Port_Out);
 
-    boost::asio::ip::tcp::resolver::query query(Server_Name, Server_Port);
-
-    resolver.async_resolve(query,
-      boost::bind(&NodejsClient::resolve_handler, this, 
+    resolver.async_resolve(query_out,
+      boost::bind(&NodejsClient::resolve_handler_out, this, 
         boost::asio::placeholders::error, 
         boost::asio::placeholders::iterator
       )
     );
+    
+    resolver.async_resolve(query_in,
+      boost::bind(&NodejsClient::resolve_handler_in, this, 
+        boost::asio::placeholders::error, 
+        boost::asio::placeholders::iterator
+      )
+    );    
 }
 
 NodejsClient::~NodejsClient() {
@@ -27,10 +35,9 @@ NodejsClient::~NodejsClient() {
  * Called in a loop for each read
  */
 void NodejsClient::read_handler(const boost::system::error_code &ec, std::size_t bytes_transferred) {
+    if(bytes_transferred) messageHandler(msg_buffer.data());
     
-    if(bytes_transferred) messageHandler(msg_buffer.data(),bytes_transferred);
-    
-    sock.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
+    sock_in.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
 	boost::bind(&NodejsClient::read_handler, this,
 	  boost::asio::placeholders::error, 
 	  boost::asio::placeholders::bytes_transferred
@@ -40,11 +47,10 @@ void NodejsClient::read_handler(const boost::system::error_code &ec, std::size_t
 /**
  * Called asynchronously when connection to socket is successfull
  */
-void NodejsClient::connect_handler(const boost::system::error_code &ec) { 
+void NodejsClient::connect_handler_in(const boost::system::error_code &ec) { 
   if (!ec) 
   { 
-    // boost::asio::write(sock, boost::asio::buffer("hello mr server"));
-    sock.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
+    sock_in.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
 	boost::bind(&NodejsClient::read_handler, this,
 	  boost::asio::placeholders::error, 
 	  boost::asio::placeholders::bytes_transferred
@@ -53,12 +59,34 @@ void NodejsClient::connect_handler(const boost::system::error_code &ec) {
 }
 
 /**
+ * Called asynchronously when connection to socket is successfull
+ */
+void NodejsClient::connect_handler_out(const boost::system::error_code &ec) { 
+  if (!ec) 
+  { 
+    boost::asio::write(sock_out, boost::asio::buffer("hello mr server"));
+  } 
+}
+
+/**
  * Called asynchronously when Server_Name is resolved
  */
-void NodejsClient::resolve_handler(const boost::system::error_code &ec, boost::asio::ip::tcp::resolver::iterator it) { 
+void NodejsClient::resolve_handler_in(const boost::system::error_code &ec, boost::asio::ip::tcp::resolver::iterator it) { 
   if (!ec) { 
     cout << "socket connected successfully" << endl;    
-      boost::asio::async_connect(sock, it, boost::bind(&NodejsClient::connect_handler, this,
+      boost::asio::async_connect(sock_in, it, boost::bind(&NodejsClient::connect_handler_in, this,
+	boost::asio::placeholders::error
+      )); 
+  } 
+} 
+
+/**
+ * Called asynchronously when Server_Name is resolved
+ */
+void NodejsClient::resolve_handler_out(const boost::system::error_code &ec, boost::asio::ip::tcp::resolver::iterator it) { 
+  if (!ec) { 
+    cout << "socket connected successfully" << endl;    
+      boost::asio::async_connect(sock_out, it, boost::bind(&NodejsClient::connect_handler_out, this,
 	boost::asio::placeholders::error
       )); 
   } 
@@ -75,20 +103,17 @@ void NodejsClient::run() {
  * Close socket and thread
  */
 void NodejsClient::closeClient() {
-  sock.close();
+  sock_in.close();
+  sock_out.close();
   th->join();
-}
-
-
-void NodejsClient::do_write(string msg) {
-  boost::asio::write(sock, boost::asio::buffer(msg.c_str(), msg.length())); 
 }
 
 /**
  * @param msg Message to send to server
  */
 void NodejsClient::sendMessage(string msg) {
-  io_service.post(boost::bind(&NodejsClient::do_write, this, msg));
+  cout << "sending message: " << msg << endl;
+  boost::asio::write(sock_out, boost::asio::buffer(msg.c_str(), msg.length())); 
 }
 
 /**
