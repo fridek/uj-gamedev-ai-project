@@ -9,10 +9,12 @@
 #include <boost/bind.hpp>
 #include <boost/array.hpp> 
 #include <boost/thread.hpp> 
+#include <deque>
 #include <iostream> 
 #include <string> 
 
 typedef void (*handlerType)(char*, int);
+typedef std::deque<std::string> message_queue;
 
 class NodejsClient {
     private:
@@ -39,6 +41,7 @@ class NodejsClient {
     void run();
     void closeClient();
     bool getSocketState();
+    void do_write(std::string msg);
     void sendMessage(std::string msg);
     void registerMessageHandler(handlerType func);
 };

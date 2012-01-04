@@ -43,7 +43,7 @@ void NodejsClient::read_handler(const boost::system::error_code &ec, std::size_t
 void NodejsClient::connect_handler(const boost::system::error_code &ec) { 
   if (!ec) 
   { 
-    boost::asio::write(sock, boost::asio::buffer("hello mr server"));
+    // boost::asio::write(sock, boost::asio::buffer("hello mr server"));
     sock.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
 	boost::bind(&NodejsClient::read_handler, this,
 	  boost::asio::placeholders::error, 
@@ -79,11 +79,16 @@ void NodejsClient::closeClient() {
   th->join();
 }
 
+
+void NodejsClient::do_write(string msg) {
+  boost::asio::write(sock, boost::asio::buffer(msg.c_str(), msg.length())); 
+}
+
 /**
  * @param msg Message to send to server
  */
 void NodejsClient::sendMessage(string msg) {
-  boost::asio::write(sock, boost::asio::buffer(msg.c_str(), msg.length())); 
+  io_service.post(boost::bind(&NodejsClient::do_write, this, msg));
 }
 
 /**
