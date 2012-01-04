@@ -1,91 +1,102 @@
-#include <errno.h>
-#include <iostream>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/wait.h>
-
 #include "NodejsClient.h"
 
 using namespace std;
 
-int NodejsClient::readinchild(int fd) {
-   char ptr[MAX_BUFFER_SIZE];
-   int f, i;
-   int nread=1;
+/**
+ * @param Server_Name hostname or IP
+ * @param Server_Port port number
+ */
+NodejsClient::NodejsClient(std::string Server_Name = "127.0.0.1", std::string Server_Port = "1337") : 
+    resolver(io_service), sock(io_service) {
 
-   f = fork();
-   if( f == 0 ) {
-     childReaderSock = fd;
-     while(true) {
-        cout.flush();
-        nread = recv(fd, ptr, MAX_BUFFER_SIZE, 0);
-        ptr[nread] = '\0'; // terminate a string
-        if(nread == 0) continue;
-        messageHandler(ptr);
-     }
-     close(fd);
-     exit(0);
-   }
-   return f;
+    boost::asio::ip::tcp::resolver::query query(Server_Name, Server_Port);
+
+    resolver.async_resolve(query,
+      boost::bind(&NodejsClient::resolve_handler, this, 
+        boost::asio::placeholders::error, 
+        boost::asio::placeholders::iterator
+      )
+    );
 }
 
-NodejsClient::NodejsClient(char * Server_IP = "127.0.0.1", int Server_Port = 1337) {
-    struct sockaddr_in srvadd;
-    closed = false;
-
-    if( ( Sock = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP) ) < 0 ) {
-        if(NODEJSCLIENT_DEBUG) cout << "Can't create socket Sock";
-    }
-    if(NODEJSCLIENT_DEBUG) cout <<  "Socket created, handle=" << Sock << endl;
-    if(NODEJSCLIENT_DEBUG) cout << "Sock will communicate with " << Server_IP << ":" << Server_Port << endl;
-
-    memset(&srvadd, 0, sizeof(struct sockaddr_in) );
-    srvadd.sin_family = AF_INET;
-    srvadd.sin_addr.s_addr = inet_addr(Server_IP);
-    srvadd.sin_port = htons((u_short) Server_Port);
-
-    if( connect( Sock, (struct sockaddr *) &srvadd, sizeof(srvadd) ) < 0 ) {
-       if(NODEJSCLIENT_DEBUG) cout << "Can't connect to remote host" << endl;
-    } 
-}
-
-NodejsClient::~NodejsClient()
-{
+NodejsClient::~NodejsClient() {
     closeClient();
 }
 
+/**
+ * Called in a loop for each read
+ */
+void NodejsClient::read_handler(const boost::system::error_code &ec, std::size_t bytes_transferred) {
+    
+    if(bytes_transferred) messageHandler(msg_buffer.data(),bytes_transferred);
+    
+    sock.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
+	boost::bind(&NodejsClient::read_handler, this,
+	  boost::asio::placeholders::error, 
+	  boost::asio::placeholders::bytes_transferred
+	));   
+}
+
+/**
+ * Called asynchronously when connection to socket is successfull
+ */
+void NodejsClient::connect_handler(const boost::system::error_code &ec) { 
+  if (!ec) 
+  { 
+    boost::asio::write(sock, boost::asio::buffer("hello mr server"));
+    sock.async_read_some(boost::asio::buffer(msg_buffer, MAX_BUFFER_SIZE), 
+	boost::bind(&NodejsClient::read_handler, this,
+	  boost::asio::placeholders::error, 
+	  boost::asio::placeholders::bytes_transferred
+	));   
+  } 
+}
+
+/**
+ * Called asynchronously when Server_Name is resolved
+ */
+void NodejsClient::resolve_handler(const boost::system::error_code &ec, boost::asio::ip::tcp::resolver::iterator it) { 
+  if (!ec) { 
+    cout << "socket connected successfully" << endl;    
+      boost::asio::async_connect(sock, it, boost::bind(&NodejsClient::connect_handler, this,
+	boost::asio::placeholders::error
+      )); 
+  } 
+} 
+
+/**
+ * Create new thread for io_service and run
+ */
 void NodejsClient::run() {
-    reader = readinchild(Sock);
+  th = new boost::thread(boost::bind(&boost::asio::io_service::run, &io_service));
 }
 
+/**
+ * Close socket and thread
+ */
 void NodejsClient::closeClient() {
-    buf[0] = 26;
-    buf[1] = 10;
-    send(Sock, buf, 2, 0);
-    close(childReaderSock);    
-    kill( reader, SIGINT );
-    close( Sock );
-    wait(0);
-    if(NODEJSCLIENT_DEBUG) cout << "Sender closing..." << endl;
+  sock.close();
+  th->join();
 }
 
-bool NodejsClient::getSocketState() {
-    return closed;
+/**
+ * @param msg Message to send to server
+ */
+void NodejsClient::sendMessage(string msg) {
+  boost::asio::write(sock, boost::asio::buffer(msg.c_str(), msg.length())); 
 }
 
-void NodejsClient::sendMessage(char* msg) {
-    cout << "sending message" << msg << " len: " << strlen(msg) << endl;
-    send(Sock, msg, strlen(msg), 0 );
-}
-
+/**
+ * Sets function to be called on each socket read
+ */
 void NodejsClient::registerMessageHandler(handlerType func) {
     messageHandler = func;
+}
+
+/**
+ * @TODO: let server close the program by returning false here
+ */
+bool NodejsClient::getSocketState() {
+  return true;
 }
 

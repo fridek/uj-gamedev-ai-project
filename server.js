@@ -19,7 +19,7 @@ var server = net.createServer(function (socket) {
 //  console.log(socket);
     socket.on('data', function(data) {
       console.log(data.toString());
-      socket.write(data.toString());
+      socket.write("server got data: " + data.toString());
       socket.end();
     });
     socket.on('end', function() {

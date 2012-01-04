@@ -5,16 +5,23 @@
 #define LOOP_TIME 0.01
 #define NODEJSCLIENT_DEBUG true
 
-using namespace std;
+#include <boost/asio.hpp> 
+#include <boost/bind.hpp>
+#include <boost/array.hpp> 
+#include <boost/thread.hpp> 
+#include <iostream> 
+#include <string> 
 
-typedef void (*handlerType)(char*);
+typedef void (*handlerType)(char*, int);
 
 class NodejsClient {
     private:
-    bool closed;
-    int Sock;
-    char buf [MAX_BUFFER_SIZE];
-    int reader;
+    boost::asio::io_service io_service; 
+    boost::asio::ip::tcp::resolver resolver; 
+    boost::asio::ip::tcp::socket sock; 
+    boost::array<char, MAX_BUFFER_SIZE> msg_buffer; 
+    
+    boost::thread *th;
 
     handlerType messageHandler;
 
@@ -22,13 +29,17 @@ class NodejsClient {
 
     public:
     int childReaderSock;
-    NodejsClient(char * Server_IP, int Server_Port );
+    void read_handler(const boost::system::error_code &ec, std::size_t bytes_transferred);
+    void resolve_handler(const boost::system::error_code &ec, boost::asio::ip::tcp::resolver::iterator it);
+    void connect_handler(const boost::system::error_code &ec); 
+
+    NodejsClient(std::string Server_IP, std::string Server_Port );
     ~NodejsClient();
 
     void run();
     void closeClient();
     bool getSocketState();
-    void sendMessage(char* msg);
+    void sendMessage(std::string msg);
     void registerMessageHandler(handlerType func);
 };
 
