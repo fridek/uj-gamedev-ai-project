@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-o2 -m32 -I /home/fridek/boost/build32/include/ -L /home/fridek/boost/build32/lib/ -L /lib/ -l pthread -lboost_filesystem -lboost_system -lboost_thread 
+CFLAGS=-o2 -I /home/fridek/boost/build/include/ -L /home/fridek/boost/build/lib/ -L /lib/ -l pthread -lboost_filesystem -lboost_system -lboost_thread 
 OBJS=client.cpp NodejsClient.cpp
 
 client: $(OBJS)

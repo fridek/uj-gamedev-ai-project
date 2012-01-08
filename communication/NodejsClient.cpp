@@ -1,3 +1,6 @@
+#ifndef NODEJSCLIENT_H
+#define NODEJSCLIENT_H
+
 #include "NodejsClient.h"
 
 using namespace std;
@@ -130,3 +133,4 @@ bool NodejsClient::getSocketState() {
   return true;
 }
 
+#endif
