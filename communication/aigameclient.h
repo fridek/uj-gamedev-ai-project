@@ -20,9 +20,26 @@
 #ifndef AIGAMECLIENT_H
 #define AIGAMECLIENT_H
 
+struct AIGameClient_Obstacle {
+  std::string type;
+  std::vector<std::pair<float, float> > vertex;
+};
+
 #include "NodejsClient.cpp"
 
 typedef void (*handlerRecievePositionType)(int, float, float);
+/**
+ * @param map_size_x int
+ * @param map_size_y int
+ * @param obstacles vector<AIGameClient_Obstacle>
+ * @param player_position_x float
+ * @param player_position_y float
+ * @param ammo_pistol int
+ * @param ammo_rpg int
+ * @param current_timestamp long long
+ * @param start_timestamp long long
+ */
+typedef void (*handlerInitMapType)(int, int, vector<AIGameClient_Obstacle>&, float, float, int, int, long long, long long);
 
 class AIGameClient
 {
@@ -36,9 +53,11 @@ public:
       static AIGameClient* getInstance();
       
       handlerRecievePositionType recievePositionHandler;
+      handlerInitMapType recieveInitMap;
       
     void sendPosition(float x, float y);
     void registerRecievePositionHandler(handlerRecievePositionType func);
+    void registerInitMapHandler(handlerInitMapType func);
 };
 
 #endif // AIGAMECLIENT_H

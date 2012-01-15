@@ -21,8 +21,10 @@
 
 void AIGameClient::handleMessage(char* a) {
   rapidjson::Document json;
+  
   if (json.ParseInsitu<0>(a).HasParseError()) {
     cout << "oopsie, JSON parsing error" << endl;
+    cout << "message with error: " << a << endl;
   } else {
     string type = json["type"].GetString();
     cout << "incoming message with type: " << type << endl;
@@ -31,12 +33,47 @@ void AIGameClient::handleMessage(char* a) {
 	const rapidjson::Value& position = json["position"];
 	AIGameClient::getInstance()->recievePositionHandler(json["player_id"].GetInt(), position[rapidjson::SizeType(0)].GetDouble(), position[rapidjson::SizeType(1)].GetDouble());
     } else if(type.compare("heartbeat") == 0) {
-      cout << "heartbeat form server, player_id: " << json["player_id"].GetInt() << " timestamp: " << endl; // json["timestamp"].GetInt() << endl;
-      
+      cout << "heartbeat form server, player_id: " << json["player_id"].GetInt() << " timestamp: " << json["timestamp"].GetInt64() << endl; 
+    } else if(type.compare("init_map") == 0) {
+	const rapidjson::Value& position = json["position"];
+	const rapidjson::Value& map_size = json["map_size"];
+	const rapidjson::Value& ammo = json["ammo"];
+	const rapidjson::Value& map = json["map"];
+
+	
+	vector<AIGameClient_Obstacle> obstacles;
+	
+	for (rapidjson::SizeType i = 0; i < map.Size(); i++) {
+	    const rapidjson::Value& obstacle = map[rapidjson::SizeType(i)];
+
+	    AIGameClient_Obstacle obst;
+	    obst.type = obstacle["type"].GetString();
+	    for (rapidjson::SizeType j = 0; j < obstacle["vertices"].Size(); j++) {
+	      const rapidjson::Value& vertex = obstacle["vertices"][rapidjson::SizeType(j)];
+	      obst.vertex.push_back(std::pair<float,float>(
+		vertex[rapidjson::SizeType(0)].GetDouble(),
+		vertex[rapidjson::SizeType(1)].GetDouble()
+	      ));
+	    }
+	    obstacles.push_back(obst);
+	}
+	
+	AIGameClient::getInstance()->recieveInitMap(
+	  map_size[rapidjson::SizeType(0)].GetInt(), map_size[rapidjson::SizeType(1)].GetInt(),
+	  obstacles,
+	  position[rapidjson::SizeType(0)].GetDouble(), position[rapidjson::SizeType(1)].GetDouble(),
+	  ammo[rapidjson::SizeType(0)].GetInt(), ammo[rapidjson::SizeType(1)].GetInt(),
+	  json["current_timestamp"].GetInt64(),
+	  json["start_timestamp"].GetInt64()
+	);
+   
     }
-      
   }
 };
+
+void AIGameClient::registerInitMapHandler(handlerInitMapType func) {
+    recieveInitMap = func;
+}
 
 void AIGameClient::registerRecievePositionHandler(handlerRecievePositionType func) {
     recievePositionHandler = func;

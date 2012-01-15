@@ -6,6 +6,7 @@
 
 #include "../communication/aigameclient.cpp"
 #include "bot.cpp"
+#include "../communication/boost/concept_check.hpp"
 
 using namespace std;
 
@@ -35,11 +36,40 @@ void recievePosition(int player_id, float x, float y) {
     redraw = true;
 }
 
+/**
+ * @param map_size_x int
+ * @param map_size_y int
+ * @param obstacles vector<AIGameClient_Obstacle>*
+ * @param player_position_x float
+ * @param player_position_y float
+ * @param ammo_pistol int
+ * @param ammo_rpg int
+ * @param current_timestamp long long
+ * @param start_timestamp long long
+ */
+void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &obstacles, 
+		float player_position_x, float player_position_y, int ammo_pistol, int ammo_rpg,
+		long long current_timestamp, long long start_timestamp) {
+  cout << "got a map: " << endl;
+  cout << "size: [" << map_size_x << "," << map_size_y << "]" << endl;
+  cout << "player_position: [" << player_position_x << "," << player_position_y << "]" << endl;
+  cout << "ammo: pistol: " << ammo_pistol << " rpg: " << ammo_rpg << endl;
+  cout << "current timestamp: " << current_timestamp << " start timestamp: " << start_timestamp << endl;
+  
+  for(int i = 0; i < obstacles.size(); i++) {
+      cout << "obstacle " << obstacles[i].type << ": ";
+      for(int j = 0; j < obstacles[i].vertex.size(); j++) {
+	  cout << "[" << obstacles[i].vertex[j].first << "," << obstacles[i].vertex[j].second << "]";
+      }
+      cout << endl;
+  }
+}
+
 int main(int argc, char **argv){
 
    client = AIGameClient::getInstance();
    client->registerRecievePositionHandler(&recievePosition);
-   
+   client->registerInitMapHandler(&recieveMap);
   
    ALLEGRO_DISPLAY *display = NULL;
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
