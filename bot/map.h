@@ -16,25 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef MAP_H
+#define MAP_H
 
-class Bot : public Renderable
+class AIMap
 {
 private:
-    slm::vec2 position;
-    ALLEGRO_COLOR color;
+    void drawObstacle(AIGameClient_Obstacle obstacle);
+    bool insideObstacle(float x, float y);
+    vector<slm::vec2> graphNodes;
 public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
+    vector<AIGameClient_Obstacle> map_obstacles;
+    slm::vec2 size;
+  
+    AIMap();
+    virtual ~AIMap();
+    void draw();
     
-    void render();
-    
-    void setPosition(slm::vec2 p);
+    void createGraph(int distance);
 };
 
-#endif
+#endif // MAP_H

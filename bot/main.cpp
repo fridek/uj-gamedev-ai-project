@@ -4,7 +4,10 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
+#include <slm/vec2.h>
+
 #include "../communication/aigameclient.cpp"
+#include "map.cpp"
 #include "bot.cpp"
 #include "../communication/boost/concept_check.hpp"
 
@@ -28,8 +31,10 @@ enum MYKEYS {
 bool key[4] = { false, false, false, false };
 
 Bot *player, *opponent;
+AIMap AImap;
 bool doexit, redraw;
-   
+
+
 void recievePosition(int player_id, float x, float y) {
     opponent->setPosition(slm::vec2(x,y));
     cout << "got a position of player " << player_id << ": [" << x << "," << y << "]" << endl;
@@ -39,7 +44,7 @@ void recievePosition(int player_id, float x, float y) {
 /**
  * @param map_size_x int
  * @param map_size_y int
- * @param obstacles vector<AIGameClient_Obstacle>*
+ * @param obstacles vector<AIGameClient_Obstacle>
  * @param player_position_x float
  * @param player_position_y float
  * @param ammo_pistol int
@@ -56,6 +61,8 @@ void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &o
   cout << "ammo: pistol: " << ammo_pistol << " rpg: " << ammo_rpg << endl;
   cout << "current timestamp: " << current_timestamp << " start timestamp: " << start_timestamp << endl;
   
+  AImap.size = slm::vec2(map_size_x, map_size_y);
+  
   for(int i = 0; i < obstacles.size(); i++) {
       cout << "obstacle " << obstacles[i].type << ": ";
       for(int j = 0; j < obstacles[i].vertex.size(); j++) {
@@ -63,6 +70,9 @@ void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &o
       }
       cout << endl;
   }
+  
+  AImap.map_obstacles = obstacles;
+  AImap.createGraph(20);
 }
 
 int main(int argc, char **argv){
@@ -159,6 +169,8 @@ int main(int argc, char **argv){
 	 al_clear_to_color(al_map_rgb(255,255,255));
 	
 	 for(int i = 0; i < bots.size(); i++) bots[i]->render();
+	 
+	 AImap.draw();
  
          al_flip_display();
       }     

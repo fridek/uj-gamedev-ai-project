@@ -5,23 +5,41 @@ var clientCount = 0;
 var clients = [];
 
 var map = [
-  {
-    type: 'rectangle',
-    vertices: [[14,6],[17,8],[13,12],[10,10]]
-  },
-  {
-    type: 'rectangle',
-    vertices: [[314,106],[317,108],[313,112],[310,110]]
-  },
-  {
-    type: 'rectangle',
-    vertices: [[500,530],[530,500],[560,530],[530,560]]
-  },
-  {
-    type: 'rectangle',
-    vertices: [[200,430],[230,400],[260,430],[230,460]]
-  }
+//   {
+//     type: 'rectangle',
+//     vertices: [[314,106],[317,108],[313,112],[310,110]]
+//   },
+//   {
+//     type: 'rectangle',
+//     vertices: [[500,530],[530,500],[560,530],[530,560]]
+//   },
+//   {
+//     type: 'rectangle',
+//     vertices: [[200,430],[230,400],[260,430],[230,460]]
+//   }
 ];
+
+for(var i = 0; i < 10; i++) {
+  var x = Math.floor(Math.random()*700);
+  var y = Math.floor(Math.random()*500);
+  
+  var x_vec = Math.random();
+  var y_vec = Math.random();
+  
+  var scale_a = 50+Math.floor(Math.random()*200);
+  var scale_b = 50+Math.floor(Math.random()*200);
+  
+  map.push({
+    type: 'rectangle',
+    vertices: [
+      [Math.floor(x), Math.floor(y)],
+      [Math.floor(x+x_vec*scale_a), Math.floor(y-y_vec*scale_a)],
+      [Math.floor(x+x_vec*scale_a+y_vec*scale_b), Math.floor(y-y_vec*scale_a+x_vec*scale_b)],
+      [Math.floor(x+y_vec*scale_b), Math.floor(y+x_vec*scale_b)]
+    ]
+  });  
+}
+
 
 function setMapToClient(id) {
   if(!clients[id].socket_in) {
