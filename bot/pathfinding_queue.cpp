@@ -16,35 +16,36 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#include "pathfinding_queue.h"
 
-class Bot : public Renderable
+Pathfinding_Queue::Pathfinding_Queue()
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
-public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
-    
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
-};
+}
 
-#endif
+bool Pathfinding_Queue::empty()
+{
+  return storage.empty();
+}
+
+void Pathfinding_Queue::insert(AIMap_Node* node)
+{
+  storage.push_back(node);
+}
+
+AIMap_Node* Pathfinding_Queue::extractMin(float heuristicsWeight, slm::vec2 target)
+{
+  if(storage.empty()) return NULL;
+  
+  int min = 0;
+  for(int i = 1; i < storage.size(); i++) {
+      if((storage[i]->cost + slm::distance(storage[i]->position, target) * heuristicsWeight)
+	< storage[min]->cost + slm::distance(storage[min]->position, target) * heuristicsWeight) {
+	min = i;
+      }
+  }
+  AIMap_Node* minNode = storage[min];
+  storage.erase(storage.begin() + min);
+  return minNode;
+}

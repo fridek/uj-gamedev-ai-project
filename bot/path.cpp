@@ -16,35 +16,28 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#include "path.h"
 
-class Bot : public Renderable
+Path::Path(list<Waypoint*> w, AIMap_Node *s, AIMap_Node *e)
+{	
+  start = s;
+  end = e;
+  waypoints = w;
+}
+
+void Path::draw()
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
-public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
-
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
+  if(waypoints.empty()) return;
+  
+  Waypoint* prev = NULL;
+  for (list<Waypoint*>::iterator it = waypoints.begin(); it != waypoints.end(); ++it) {
     
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
-};
-
-#endif
+    if(prev) {
+      al_draw_line(prev->node->position.x, prev->node->position.y, 
+		  (*it)->node->position.x, (*it)->node->position.y,
+		  al_map_rgb(255,0,0), 3.0f);
+    }
+    prev = *it;
+  }  
+}

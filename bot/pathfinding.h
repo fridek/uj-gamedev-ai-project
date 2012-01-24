@@ -16,35 +16,35 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef PATHFINDING_H
+#define PATHFINDING_H
 
-class Bot : public Renderable
+#include "bot.h"
+#include "pathfinding_queue.cpp"
+#include "waypoint.cpp"
+#include "path.cpp"
+
+class Pathfinding
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
+    Pathfinding();
+    vector<Path*> paths;
+    AIMap *map;
+    
+    Path* dijkstra(AIMap_Node *start, AIMap_Node *end);
 public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
+    static Pathfinding& getInstance() {
+	static Pathfinding instance;
+	return instance;
+    }
     
-    int currentPath;
+    void setMap(AIMap *m);
     
-    void setMap(AIMap* m);
+    int follow(Bot* following, Bot* followed);
+    slm::vec2 getDirection(int pathID);
     
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
+    void drawPath(int pathID);
 };
 
-#endif
+#endif // PATHFINDING_H

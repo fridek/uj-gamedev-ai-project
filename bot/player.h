@@ -16,35 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef PLAYER_H
+#define PLAYER_H
 
-class Bot : public Renderable
+#include "bot.h"
+
+
+class Player : public Bot
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
-public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
-    
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
+public:
+    Player();
+    Player(slm::vec2 p);
 };
 
-#endif
+#endif // PLAYER_H

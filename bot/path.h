@@ -16,35 +16,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef PATH_H
+#define PATH_H
 
-class Bot : public Renderable
+class Path
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
-public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
-    
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
+public:
+  AIMap_Node *start, *end;
+  list<Waypoint*> waypoints;
+  Path(list<Waypoint*> w, AIMap_Node *s, AIMap_Node *e);
+  void draw();
 };
 
-#endif
+#endif // PATH_H

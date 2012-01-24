@@ -25,8 +25,10 @@ class AIMap
 private:
     void drawObstacle(AIGameClient_Obstacle obstacle);
     bool insideObstacle(float x, float y);
-    vector<slm::vec2> graphNodes;
+    AIMap_Node* addNode(float x, float y);
 public:
+    int distance;
+    vector<AIMap_Node*> graphNodes;
     vector<AIGameClient_Obstacle> map_obstacles;
     slm::vec2 size;
   
@@ -35,6 +37,7 @@ public:
     void draw();
     
     void createGraph(int distance);
+    void initCosts(float cost);
 };
 
 #endif // MAP_H

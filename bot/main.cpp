@@ -1,44 +1,50 @@
 #include <iostream>
 #include <vector>
+#include <list>
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 
 #include <slm/vec2.h>
 
-#include "../communication/aigameclient.cpp"
-#include "map.cpp"
-#include "bot.cpp"
-#include "../communication/boost/concept_check.hpp"
-
-using namespace std;
-
 #define SCREEN_W 800
 #define SCREEN_H 600
 #define FPS 60
 
+#define NUMBER_OF_BOTS 5
+
+#define INF 4294967295
+
+#include "../communication/aigameclient.cpp"
+#include "keyboard.cpp"
+#include "aimap_node.cpp"
+#include "map.cpp"
+#include "pathfinding.cpp"
+#include "bot.cpp"
+#include "player.cpp"
+
+using namespace std;
+
 AIGameClient* client;
-vector<Bot*> bots;
 
 float randf() {
     return float(rand()%1000)/1000;
 }
 
-// keyboard input
-enum MYKEYS {
-   KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT
-};
-bool key[4] = { false, false, false, false };
+vector<Bot*> bots;
+vector<Bot*> AIbots;
+Player *player;
 
-Bot *player, *opponent;
 AIMap AImap;
-bool doexit, redraw;
+int pathID;
+   
+bool doexit, redraw, initialized;
 
 
 void recievePosition(int player_id, float x, float y) {
-    opponent->setPosition(slm::vec2(x,y));
-    cout << "got a position of player " << player_id << ": [" << x << "," << y << "]" << endl;
-    redraw = true;
+    //opponent->setPosition(slm::vec2(x,y));
+    //cout << "got a position of player " << player_id << ": [" << x << "," << y << "]" << endl;
+    //redraw = true;
 }
 
 /**
@@ -73,13 +79,30 @@ void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &o
   
   AImap.map_obstacles = obstacles;
   AImap.createGraph(20);
+  
+  Pathfinding::getInstance().setMap(&AImap);
+  
+  player->setMap(&AImap);
+  player->findNearestNode();
+  
+   for(int i = 0; i < NUMBER_OF_BOTS; i++) {
+      slm::vec2 p(rand()%(int)AImap.size.x,rand()%(int)AImap.size.y);    
+      Bot* bot = new Bot(p, al_map_rgb(0, 0, 255));
+      bot->setMap(&AImap);
+      bot->findNearestNode();
+      bots.push_back(bot);
+      AIbots.push_back(bot);
+   }  
+   
+  for(int i = 0; i < AIbots.size(); i++) {
+    AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], player);
+  }   
+  
+  initialized = true;
 }
 
 int main(int argc, char **argv){
-
-   client = AIGameClient::getInstance();
-   client->registerRecievePositionHandler(&recievePosition);
-   client->registerInitMapHandler(&recieveMap);
+   initialized = false;
   
    ALLEGRO_DISPLAY *display = NULL;
    ALLEGRO_EVENT_QUEUE *event_queue = NULL;
@@ -102,75 +125,57 @@ int main(int argc, char **argv){
    al_register_event_source(event_queue, al_get_keyboard_event_source());
    
    al_start_timer(timer);
-   
+
    slm::vec2 p(20,20);    
+   player = new Player(p);
+   bots.push_back(player);    
    
-   player = new Bot(p, al_map_rgb(0, 0, 255));
-   bots.push_back(player);
+   //opponent = new Bot(p, al_map_rgb(255, 0, 0));
+   //bots.push_back(opponent);
+
+   client = AIGameClient::getInstance();
+   client->registerRecievePositionHandler(&recievePosition);
+   client->registerInitMapHandler(&recieveMap);   
    
-   opponent = new Bot(p, al_map_rgb(255, 0, 0));
-   bots.push_back(opponent);
    doexit = false, redraw = true;
+   
    while(!doexit) {
       ALLEGRO_EVENT ev;
       al_wait_for_event(event_queue, &ev);
  
       if(ev.type == ALLEGRO_EVENT_TIMER) {
-         if(key[KEY_UP] && p.y >= 21.0) 		p.y -= 1.0;
-         if(key[KEY_DOWN] && p.y <= SCREEN_H - 20.0) 	p.y += 1.0;
-         if(key[KEY_LEFT] && p.x >= 21.0) 		p.x -= 1.0;
-         if(key[KEY_RIGHT] && p.x <= SCREEN_W - 20.0) 	p.x += 1.0;
-	 if(key[KEY_DOWN] || key[KEY_UP] || key[KEY_LEFT] || key[KEY_RIGHT]) {
-	  bots[0]->setPosition(p);
+         if(Keyboard::getInstance().up() && p.y >= 21.0) 		p.y -= 1.0;
+         if(Keyboard::getInstance().down() && p.y <= SCREEN_H - 20.0) 	p.y += 1.0;
+         if(Keyboard::getInstance().left() && p.x >= 21.0) 		p.x -= 1.0;
+         if(Keyboard::getInstance().right() && p.x <= SCREEN_W - 20.0) 	p.x += 1.0;
+	 if(Keyboard::getInstance().anyArrow()) {
+	  player->setPosition(p);
+	  for(int i = 0; i < AIbots.size(); i++) {
+	     AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], player);
+	  }
 	  client->sendPosition(p.x, p.y);
 	  redraw = true;
 	 }
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {break;}
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-         switch(ev.keyboard.keycode) {
-             case ALLEGRO_KEY_UP:
-               key[KEY_UP] = true;
-               break;
-             case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = true;
-               break;
-             case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = true;
-               break;
-             case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = true;
-               break;
-         }
+	Keyboard::getInstance().downKey(ev.keyboard.keycode);
       }
       else if(ev.type == ALLEGRO_EVENT_KEY_UP) {
-         switch(ev.keyboard.keycode) {
-            case ALLEGRO_KEY_UP:
-               key[KEY_UP] = false;
-               break;
-            case ALLEGRO_KEY_DOWN:
-               key[KEY_DOWN] = false;
-               break;
-            case ALLEGRO_KEY_LEFT: 
-               key[KEY_LEFT] = false;
-               break;
-            case ALLEGRO_KEY_RIGHT:
-               key[KEY_RIGHT] = false;
-               break;
-            case ALLEGRO_KEY_ESCAPE:
-               doexit = true;
-               break;
-         }
+	  Keyboard::getInstance().upKey(ev.keyboard.keycode);
+	  if(ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) doexit = true;
       }
  
-      if(redraw && al_is_event_queue_empty(event_queue)) {
+      if(redraw && al_is_event_queue_empty(event_queue) && initialized) {
          redraw = false;
  
 	 al_clear_to_color(al_map_rgb(255,255,255));
-	
-	 for(int i = 0; i < bots.size(); i++) bots[i]->render();
-	 
 	 AImap.draw();
+	 
+	 for(int i = 0; i < bots.size(); i++) {
+	   bots[i]->updatePosition();
+	   bots[i]->render();
+	 }
  
          al_flip_display();
       }     

@@ -16,35 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef PATHFINDING_QUEUE_H
+#define PATHFINDING_QUEUE_H
 
-class Bot : public Renderable
+class Pathfinding_Queue
 {
 private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
+    vector<AIMap_Node*> storage;
 public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
-
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
-    
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
+    Pathfinding_Queue();
+    void insert(AIMap_Node* node);
+    bool empty();
+    AIMap_Node* extractMin(float heuristicsWeight, slm::vec2 target);
 };
 
-#endif
+#endif // PATHFINDING_QUEUE_H

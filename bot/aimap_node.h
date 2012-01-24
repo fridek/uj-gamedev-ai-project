@@ -16,35 +16,27 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef AIMAP_NODE_H
+#define AIMAP_NODE_H
 
-class Bot : public Renderable
+class AIMap_Node
 {
-private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
+ 
 public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
-
-    AIMap_Node* nearestNode;    
+    AIMap_Node(slm::vec2 pos);
+    virtual bool operator==(const AIMap_Node& other) const;
+    virtual bool operator==(AIMap_Node* other) const;
     slm::vec2 position;
     
-    int currentPath;
+    /*
+     * values for any graph search
+     */
+    float cost;
+    AIMap_Node *prev;
     
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
+    vector<AIMap_Node*> neighbours;
+    void addNeighbour(AIMap_Node* n);
 };
 
-#endif
+#endif // AIMAP_NODE_H

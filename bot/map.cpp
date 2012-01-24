@@ -53,7 +53,16 @@ void AIMap::draw() {
   }
   
   for(int i = 0; i < graphNodes.size(); i++) {
-    al_draw_circle(graphNodes[i].x, graphNodes[i].y, 1, al_map_rgb(0,255,0), 1);
+    for(int j = 0; j < graphNodes[i]->neighbours.size(); j++) {
+      al_draw_line(graphNodes[i]->position.x, graphNodes[i]->position.y, 
+		   graphNodes[i]->neighbours[j]->position.x, graphNodes[i]->neighbours[j]->position.y,
+		   al_map_rgb(150,150,150), 1.0f);      
+    }
+    al_draw_circle(graphNodes[i]->position.x, graphNodes[i]->position.y, 1, al_map_rgb(0,255,0), 2.0f);
+    
+    if(Keyboard::getInstance().key[Keyboard::KEY_1]) {
+      
+    }
   }
 }
 
@@ -83,18 +92,46 @@ bool AIMap::insideObstacle(float x, float y) {
   return ret2;
 }
 
+AIMap_Node* AIMap::addNode(float x, float y) {
+  if(x < 0 || y < 0 || x > size.x || y > size.y) return NULL;
+  
+  if(!insideObstacle(x,y)) {
+    AIMap_Node* newNode = new AIMap_Node(slm::vec2(x,y));
+    for(int i = 0; i<graphNodes.size(); i++) {
+      if(graphNodes[i]->position == newNode->position) {
+	return graphNodes[i];
+      }
+    }
+    graphNodes.push_back(newNode);
+    // cout << "added node (" << x << "," << y << ")" << endl;
+
+    newNode->addNeighbour(addNode(x - distance, y));
+    newNode->addNeighbour(addNode(x, y - distance));
+    newNode->addNeighbour(addNode(x + distance, y));
+    newNode->addNeighbour(addNode(x, y + distance));    
+    newNode->addNeighbour(addNode(x - distance, y - distance));
+    newNode->addNeighbour(addNode(x - distance, y + distance));
+    newNode->addNeighbour(addNode(x + distance, y - distance));
+    newNode->addNeighbour(addNode(x + distance, y + distance));
+    return newNode;
+  } 
+  return NULL;
+}
+
 /**
  * @TODO: change to flooding
  */
-void AIMap::createGraph(int distance)
+void AIMap::createGraph(int d)
 {
-  for(float x = 0; x <= size.x; x+=distance) {
-    for(float y = 0; y <= size.y; y+=distance) {
-      if(!insideObstacle(x,y)) {
-	graphNodes.push_back(slm::vec2(x,y));
-	// cout << "added node (" << x << "," << y << ")" << endl;
-      }
-    }
+  distance = d;
+  addNode(0, 0);
+}
+
+void AIMap::initCosts(float cost)
+{
+  for(int i = 0; i<graphNodes.size(); i++) {
+    graphNodes[i]->cost = cost;
+    graphNodes[i]->prev = NULL;
   }
 }
 

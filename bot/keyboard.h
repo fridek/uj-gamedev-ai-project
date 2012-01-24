@@ -16,35 +16,35 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef KEYBOARD_H
+#define KEYBOARD_H
 
-class Bot : public Renderable
+class Keyboard
 {
 private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
+    Keyboard();
 public:
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
+    static Keyboard& getInstance() {
+      static Keyboard instance;
+      return instance;
+    }
 
-    AIMap_Node* nearestNode;    
-    slm::vec2 position;
+    bool up();
+    bool down();
+    bool left();
+    bool right();
+    bool anyArrow();
     
-    int currentPath;
+    void downKey(int keyCode);
+    void upKey(int keyCode);
     
-    void setMap(AIMap* m);
+    // keyboard input
+    enum MYKEYS {
+      KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8
+    };
+    bool key[12];  
     
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    void findNearestNode();
-    void updatePosition();
-    void updateNearestNode();
 };
 
-#endif
+#endif // KEYBOARD_H
