@@ -12,10 +12,13 @@
 #define FPS 60
 
 #define NUMBER_OF_BOTS 5
+#define MAX_SPEED 10.0
+#define FRICTION 0.5
 
 #define INF 4294967295
 
 #include "../communication/aigameclient.cpp"
+#include "sterring.cpp"
 #include "keyboard.cpp"
 #include "aimap_node.cpp"
 #include "map.cpp"
@@ -126,8 +129,7 @@ int main(int argc, char **argv){
    
    al_start_timer(timer);
 
-   slm::vec2 p(20,20);    
-   player = new Player(p);
+   player = new Player(slm::vec2(20,20));
    bots.push_back(player);    
    
    //opponent = new Bot(p, al_map_rgb(255, 0, 0));
@@ -138,24 +140,33 @@ int main(int argc, char **argv){
    client->registerInitMapHandler(&recieveMap);   
    
    doexit = false, redraw = true;
+   int serverCounter = 0;
    
    while(!doexit) {
       ALLEGRO_EVENT ev;
       al_wait_for_event(event_queue, &ev);
  
-      if(ev.type == ALLEGRO_EVENT_TIMER) {
-         if(Keyboard::getInstance().up() && p.y >= 21.0) 		p.y -= 1.0;
-         if(Keyboard::getInstance().down() && p.y <= SCREEN_H - 20.0) 	p.y += 1.0;
-         if(Keyboard::getInstance().left() && p.x >= 21.0) 		p.x -= 1.0;
-         if(Keyboard::getInstance().right() && p.x <= SCREEN_W - 20.0) 	p.x += 1.0;
-	 if(Keyboard::getInstance().anyArrow()) {
-	  player->setPosition(p);
+      if(ev.type == ALLEGRO_EVENT_TIMER && initialized) {
+	 slm::vec2 p(0,0);
+	 float rotation = 0;
+	
+         if(Keyboard::getInstance().up() && player->position.y >= 21.0) 		p.y -= MAX_SPEED;
+         if(Keyboard::getInstance().down() && player->position.y <= SCREEN_H - 20.0) 	p.y += MAX_SPEED;
+         if(Keyboard::getInstance().left() && player->position.x >= 21.0) 		p.x -= MAX_SPEED;
+         if(Keyboard::getInstance().right() && player->position.x <= SCREEN_W - 20.0) 	p.x += MAX_SPEED;
+
+	 player->setSterring(new Sterring(p, rotation));
+	 for(int i = 0; i < bots.size(); i++) {
+	    bots[i]->updatePosition(1.0 / FPS);
+	 }
+
 	  for(int i = 0; i < AIbots.size(); i++) {
 	     AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], player);
 	  }
-	  client->sendPosition(p.x, p.y);
-	  redraw = true;
-	 }
+	 if(++serverCounter % FPS == 0) client->sendPosition(player->position.x, player->position.y);
+
+	  
+	 redraw = true;
       }
       else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {break;}
       else if(ev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -173,7 +184,6 @@ int main(int argc, char **argv){
 	 AImap.draw();
 	 
 	 for(int i = 0; i < bots.size(); i++) {
-	   bots[i]->updatePosition();
 	   bots[i]->render();
 	 }
  

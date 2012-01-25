@@ -24,17 +24,27 @@ Bot::Bot() {
   
   color = al_map_rgb(255, 0, 0);
   
-  currentPath = -1;
+  init();
 }
 
 Bot::Bot(slm::vec2 p):position(p) {
   color = al_map_rgb(255, 0, 0);
   
-  currentPath = -1;
+  init();
 }
 
 Bot::Bot(slm::vec2 p, ALLEGRO_COLOR c):position(p),color(c) {
+  init();
+}
+
+void Bot::init() {
   currentPath = -1;
+
+  orientation = 0;
+  velocity = slm::vec2(0,0);
+  rotation = 0;
+  
+  sterring = new Sterring(slm::vec2(0,0), 0);
 }
 
 Bot::~Bot() {}
@@ -53,6 +63,12 @@ void Bot::setPosition(slm::vec2 p) {
   position = p;
 }
 
+void Bot::setSterring(Sterring *s)
+{
+  sterring = s;
+}
+
+
 void Bot::findNearestNode() {
     float minDist = map->size.x*map->size.y;
     
@@ -65,7 +81,18 @@ void Bot::findNearestNode() {
     }
 }
 
-void Bot::updatePosition() {
+void Bot::updatePosition(float time) {
+  position += velocity * time;
+  orientation += rotation * time;
+  
+  velocity += sterring->linear * time;
+  rotation += sterring->angular * time;
+  
+  if(slm::length(sterring->linear) == 0) {
+    velocity *= (1.0 - FRICTION*time);
+    if(slm::length(velocity) < (MAX_SPEED*0.5)) velocity = slm::vec2(0,0);
+  }
+  
   updateNearestNode();
 }
 

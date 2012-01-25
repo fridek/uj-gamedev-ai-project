@@ -16,47 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BOT_H
-#define BOT_H
 
-#include "renderable.cpp"
+#ifndef STERRING_H
+#define STERRING_H
 
-class Bot : public Renderable
+class Sterring
 {
 private:
-    ALLEGRO_COLOR color;
-    AIMap* map;
-    
-    Sterring *sterring;
-    
-    void init();
-    
-public:
-    slm::vec2 position;
-    float orientation;
-    slm::vec2 velocity;    
-    float rotation;
-  
-    Bot();
-    Bot(slm::vec2 p);
-    Bot(slm::vec2 p, ALLEGRO_COLOR c);
-    virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
-    
-    int currentPath;
-    
-    void setMap(AIMap* m);
-    
-    void render();
-    
-    void setPosition(slm::vec2 p);
-    
-    void setSterring(Sterring *s);
-    
-    void findNearestNode();
-    void updatePosition(float time);
-    void updateNearestNode();
+public:
+  slm::vec2 linear;
+  float angular;
+  
+  Sterring(slm::vec2 l, float a);
 };
 
-#endif
+#endif // STERRING_H
