@@ -17,34 +17,32 @@
 */
 
 
-#ifndef PATHFINDING_H
-#define PATHFINDING_H
+#include "collectable.h"
 
-#include "bot.h"
-#include "pathfinding_queue.cpp"
-#include "waypoint.cpp"
-#include "path.cpp"
-
-class Pathfinding
+Collectable::Collectable(string t, int a, slm::vec2 p, AIMap* map)
 {
-    Pathfinding();
-    vector<Path*> paths;
-    AIMap *map;
-    
-    Path* dijkstra(AIMap_Node *start, AIMap_Node *end);
-public:
+  type = t;
+  amount = a;
+  position = p;
 
-    static Pathfinding& getInstance() {
-	static Pathfinding instance;
-	return instance;
-    }
-    
-    void setMap(AIMap *m);
-    
-    int follow(Bot* following, Followable* followed);
-    Sterring* getSterring(slm::vec2 position, int pathID);
-    
-    void drawPath(int pathID);
-};
+  float minDist = map->size.x*map->size.y;
+  
+  for(int i = 0; i < map->graphNodes.size(); i++) {
+    float dist = slm::distance(position, map->graphNodes[i]->position);
+    if(dist < minDist) {
+      minDist = dist;
+      nearestNode = map->graphNodes[i];
+    }      
+  }
+}
 
-#endif // PATHFINDING_H
+void Collectable::render()
+{
+  al_draw_filled_circle(position.x, position.y, 20, al_map_rgb(255,0,255));
+  al_draw_filled_circle(nearestNode->position.x, nearestNode->position.y, 5, al_map_rgb(160, 160, 0));
+}
+
+AIMap_Node* Collectable::getNearestNode()
+{
+  return nearestNode;
+}

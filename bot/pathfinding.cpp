@@ -67,14 +67,14 @@ Path* Pathfinding::dijkstra(AIMap_Node* start, AIMap_Node* end)
   return p;
 }
 
-int Pathfinding::follow(Bot* following, Bot* followed)
+int Pathfinding::follow(Bot* following, Followable* followed)
 {
   if(following->currentPath != -1 && 
-    paths[following->currentPath]->start->position == following->nearestNode->position && 
-    paths[following->currentPath]->end->position == followed->nearestNode->position)
+    paths[following->currentPath]->start->position == following->getNearestNode()->position && 
+    paths[following->currentPath]->end->position == followed->getNearestNode()->position)
     return following->currentPath;
 
-  Path* foundPath = dijkstra(following->nearestNode, followed->nearestNode);
+  Path* foundPath = dijkstra(following->getNearestNode(), followed->getNearestNode());
   paths.push_back(foundPath);
   return paths.size() - 1;
 }

@@ -17,34 +17,13 @@
 */
 
 
-#ifndef PATHFINDING_H
-#define PATHFINDING_H
+#ifndef FOLLOWABLE_H
+#define FOLLOWABLE_H
 
-#include "bot.h"
-#include "pathfinding_queue.cpp"
-#include "waypoint.cpp"
-#include "path.cpp"
-
-class Pathfinding
+class Followable
 {
-    Pathfinding();
-    vector<Path*> paths;
-    AIMap *map;
-    
-    Path* dijkstra(AIMap_Node *start, AIMap_Node *end);
 public:
-
-    static Pathfinding& getInstance() {
-	static Pathfinding instance;
-	return instance;
-    }
-    
-    void setMap(AIMap *m);
-    
-    int follow(Bot* following, Followable* followed);
-    Sterring* getSterring(slm::vec2 position, int pathID);
-    
-    void drawPath(int pathID);
+  virtual AIMap_Node* getNearestNode() = 0;
 };
 
-#endif // PATHFINDING_H
+#endif // FOLLOWABLE_H

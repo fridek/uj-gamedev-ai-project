@@ -125,3 +125,14 @@ void Bot::updateNearestNode() {
   }
   nearestNode = newNearest;
 }
+
+AIMap_Node* Bot::getNearestNode()
+{
+  return nearestNode;
+}
+
+
+void Bot::setFollow(Followable* f)
+{
+  followed = f;
+}

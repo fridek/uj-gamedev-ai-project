@@ -33,7 +33,7 @@ void AIGameClient::handleMessage(char* a) {
 	const rapidjson::Value& position = json["position"];
 	AIGameClient::getInstance()->recievePositionHandler(json["player_id"].GetInt(), position[rapidjson::SizeType(0)].GetDouble(), position[rapidjson::SizeType(1)].GetDouble());
     } else if(type.compare("heartbeat") == 0) {
-      cout << "heartbeat form server, player_id: " << json["player_id"].GetInt() << " timestamp: " << json["timestamp"].GetInt64() << endl; 
+        cout << "heartbeat form server, player_id: " << json["player_id"].GetInt() << " timestamp: " << json["timestamp"].GetInt64() << endl; 
     } else if(type.compare("init_map") == 0) {
 	const rapidjson::Value& position = json["position"];
 	const rapidjson::Value& map_size = json["map_size"];
@@ -67,6 +67,8 @@ void AIGameClient::handleMessage(char* a) {
 	  json["start_timestamp"].GetInt64()
 	);
    
+    } else if(type.compare("collectable") == 0) {
+	AIGameClient::getInstance()->recieveCollectableHandler(json["subtype"].GetString(), json["amount"].GetInt(), json["x"].GetInt(), json["y"].GetInt());
     }
   }
 };
@@ -78,6 +80,12 @@ void AIGameClient::registerInitMapHandler(handlerInitMapType func) {
 void AIGameClient::registerRecievePositionHandler(handlerRecievePositionType func) {
     recievePositionHandler = func;
 }
+
+void AIGameClient::registerRecieveCollectableHandler(handlerRecieveCollectableType func)
+{
+  recieveCollectableHandler = func;
+}
+
 
 AIGameClient::AIGameClient()
 {

@@ -22,7 +22,13 @@
 #include "sterring.cpp"
 #include "keyboard.cpp"
 #include "aimap_node.cpp"
+
+#include "followable.h"
 #include "map.cpp"
+
+#include "renderable.cpp"
+#include "collectable.cpp"
+
 #include "pathfinding.cpp"
 #include "bot.cpp"
 #include "player.cpp"
@@ -37,6 +43,7 @@ float randf() {
 
 vector<Bot*> bots;
 vector<Bot*> AIbots;
+vector<Collectable*> collectables;
 Player *player;
 
 AIMap AImap;
@@ -49,6 +56,19 @@ void recievePosition(int player_id, float x, float y) {
     //opponent->setPosition(slm::vec2(x,y));
     //cout << "got a position of player " << player_id << ": [" << x << "," << y << "]" << endl;
     //redraw = true;
+}
+
+void recieveCollectable(string type, int amount, float x, float y) {
+  cout << "====================================================================================================" << endl;
+  cout << "collectable: " << type << "(" << amount << ") on (" << x << "," << y << ")" << endl;
+  cout << "====================================================================================================" << endl;
+  
+  Collectable* c = new Collectable(type, amount, slm::vec2(x,y), &AImap);
+  collectables.push_back(c);
+  
+  for(int i = 0; i < bots.size(); i++) {
+      if(rand()%3==0) bots[i]->setFollow(c);
+  }  
 }
 
 /**
@@ -93,15 +113,12 @@ void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &o
       slm::vec2 p(rand()%(int)AImap.size.x,rand()%(int)AImap.size.y);    
       Bot* bot = new Bot(p, al_map_rgb(0, 0, 255));
       bot->setMap(&AImap);
+      bot->setFollow(player);      
       bot->findNearestNode();
       bots.push_back(bot);
       AIbots.push_back(bot);
    }  
-   
-  for(int i = 0; i < AIbots.size(); i++) {
-    AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], player);
-  }   
-  
+ 
   initialized = true;
 }
 
@@ -138,6 +155,7 @@ int main(int argc, char **argv){
 
    client = AIGameClient::getInstance();
    client->registerRecievePositionHandler(&recievePosition);
+   client->registerRecieveCollectableHandler(&recieveCollectable);
    client->registerInitMapHandler(&recieveMap);   
    
    doexit = false, redraw = true;
@@ -162,7 +180,7 @@ int main(int argc, char **argv){
 	 }
 
 	  for(int i = 0; i < AIbots.size(); i++) {
-	     AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], player);
+	     AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], AIbots[i]->followed);
 	  }
 	 if(++serverCounter % FPS == 0) client->sendPosition(player->position.x, player->position.y);
 
@@ -186,6 +204,10 @@ int main(int argc, char **argv){
 	 
 	 for(int i = 0; i < bots.size(); i++) {
 	   bots[i]->render();
+	 }
+	 
+	 for(int i = 0; i < collectables.size(); i++) {
+	   collectables[i]->render();
 	 }
  
          al_flip_display();

@@ -21,7 +21,7 @@
 
 #include "renderable.cpp"
 
-class Bot : public Renderable
+class Bot : public Renderable, public Followable
 {
 private:
     ALLEGRO_COLOR color;
@@ -34,9 +34,10 @@ private:
 
 protected:
     bool AI;
-    Bot* followed;
-    
+    AIMap_Node* nearestNode;     
 public:
+    Followable* followed;
+  
     slm::vec2 position;
     float orientation;
     slm::vec2 velocity;    
@@ -47,7 +48,7 @@ public:
     Bot(slm::vec2 p, ALLEGRO_COLOR c);
     virtual ~Bot();
 
-    AIMap_Node* nearestNode;    
+    AIMap_Node* getNearestNode();
     
     int currentPath;
     
@@ -58,6 +59,8 @@ public:
     void setPosition(slm::vec2 p);
     
     void setSterring(Sterring *s);
+    
+    void setFollow(Followable *f);
     
     void findNearestNode();
     void updatePosition(float time);

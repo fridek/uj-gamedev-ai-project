@@ -1,5 +1,9 @@
 var net = require('net');
 
+function trim(str) {
+  return str.replace(/^\s\s*/, '').replace(/\s\s*$/, '');  
+}
+
 var clientCount = 0;
 
 var clients = [];
@@ -60,6 +64,28 @@ function setMapToClient(id) {
   clients[id].socket_in.write(JSON.stringify(data) + '\0');
 };
 
+process.stdin.resume();
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', function (chunk) {
+  chunk = trim(chunk);
+  
+  var x = Math.floor(Math.random()*700);
+  var y = Math.floor(Math.random()*500);
+  
+  for(var i = 0; i<clients.length;i++) {
+    if(clients[i] && clients[i].socket_in) {
+      if(chunk == 'medkit') {
+	console.log("sending medkit");
+	clients[i].socket_in.write(JSON.stringify({type: "collectable", subtype: "medkit", amount: 50, x:x, y:y}) + '\0');
+      }
+      if(chunk == 'weapon') {
+	console.log("sending weapon");
+	clients[i].socket_in.write(JSON.stringify({type: "collectable", subtype: "weapon", amount: 50, x:x, y:y}) + '\0');
+      }      
+    }
+  }    
+
+});
 
 var server_out = net.createServer(function (socket) {
   socket.write("Echo server");
@@ -82,7 +108,7 @@ var server_out = net.createServer(function (socket) {
 	timestamp: Date.now()
     };
     socket.write(JSON.stringify(heartbeat) + '\0');
-    console.log(heartbeat);
+    // console.log(heartbeat);
     setTimeout(tim, 1000);
   }, 1000);
 
@@ -108,7 +134,7 @@ var server_in = net.createServer(function (socket) {
   var disconnected = false;
 
   socket.on('data', function(data) {
-      console.log(data.toString());
+      // console.log(data.toString());
       if(!clients[socket.id].socket_in || disconnected) {
 	  console.log("socket not ready");
 	  return;
