@@ -41,3 +41,15 @@ void Path::draw()
     prev = *it;
   }  
 }
+
+slm::vec2 Path::getPosition(int fromStart)
+{
+  if(waypoints.empty()) return slm::vec2(0,0);
+  
+  Waypoint* prev = NULL;
+  for (list<Waypoint*>::iterator it = waypoints.begin();; ++it) {
+    if(it == waypoints.end()) return prev->node->position;
+    if(--fromStart <= 0) return (*it)->node->position;
+    prev = *it;
+  }
+}

@@ -85,3 +85,13 @@ void Pathfinding::drawPath(int pathID)
   paths[pathID]->draw();
 }
 
+Sterring* Pathfinding::getSterring(slm::vec2 position, int pathID)
+{
+  if(pathID == -1 || !paths[pathID]) return new Sterring(slm::vec2(0,0), 0);
+  
+  slm::vec2 direction = paths[pathID]->getPosition(2) - position;
+  direction = slm::clamp(direction, slm::vec2(-MAX_STERRING,-MAX_STERRING), slm::vec2(MAX_STERRING,MAX_STERRING));
+  
+  return new Sterring(direction, 0);
+}
+

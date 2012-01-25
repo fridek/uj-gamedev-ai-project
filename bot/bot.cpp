@@ -23,17 +23,18 @@ Bot::Bot() {
   position.y = 20;
   
   color = al_map_rgb(255, 0, 0);
-  
+  AI = true;
   init();
 }
 
 Bot::Bot(slm::vec2 p):position(p) {
   color = al_map_rgb(255, 0, 0);
-  
+  AI = true;
   init();
 }
 
 Bot::Bot(slm::vec2 p, ALLEGRO_COLOR c):position(p),color(c) {
+  AI = true;
   init();
 }
 
@@ -81,11 +82,22 @@ void Bot::findNearestNode() {
     }
 }
 
+void Bot::getSterring()
+{
+  sterring = Pathfinding::getInstance().getSterring(position, currentPath);
+}
+
+
 void Bot::updatePosition(float time) {
+  if(AI) getSterring();
+  
   position += velocity * time;
   orientation += rotation * time;
   
   velocity += sterring->linear * time;
+  // let player be faster
+  if(AI) velocity = slm::clamp(velocity, slm::vec2(-MAX_SPEED,-MAX_SPEED), slm::vec2(MAX_SPEED,MAX_SPEED));
+  else  velocity = slm::clamp(velocity, slm::vec2(-2*MAX_SPEED,-2*MAX_SPEED), slm::vec2(2*MAX_SPEED,2*MAX_SPEED));
   rotation += sterring->angular * time;
   
   if(slm::length(sterring->linear) == 0) {

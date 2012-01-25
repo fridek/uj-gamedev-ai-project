@@ -21,11 +21,11 @@
 
 Player::Player():Bot()
 {
-
+  AI = false;
 }
 
 Player::Player(slm::vec2 p):Bot(p)
 {
-
+  AI = false;
 }
 

@@ -42,7 +42,7 @@ public:
     void setMap(AIMap *m);
     
     int follow(Bot* following, Bot* followed);
-    slm::vec2 getDirection(int pathID);
+    Sterring* getSterring(slm::vec2 position, int pathID);
     
     void drawPath(int pathID);
 };

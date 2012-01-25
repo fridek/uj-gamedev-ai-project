@@ -12,8 +12,9 @@
 #define FPS 60
 
 #define NUMBER_OF_BOTS 5
-#define MAX_SPEED 10.0
-#define FRICTION 0.5
+#define MAX_SPEED 20.0
+#define MAX_STERRING 100.0
+#define FRICTION 2.0
 
 #define INF 4294967295
 
@@ -150,10 +151,10 @@ int main(int argc, char **argv){
 	 slm::vec2 p(0,0);
 	 float rotation = 0;
 	
-         if(Keyboard::getInstance().up() && player->position.y >= 21.0) 		p.y -= MAX_SPEED;
-         if(Keyboard::getInstance().down() && player->position.y <= SCREEN_H - 20.0) 	p.y += MAX_SPEED;
-         if(Keyboard::getInstance().left() && player->position.x >= 21.0) 		p.x -= MAX_SPEED;
-         if(Keyboard::getInstance().right() && player->position.x <= SCREEN_W - 20.0) 	p.x += MAX_SPEED;
+         if(Keyboard::getInstance().up() && player->position.y >= 21.0) 		p.y -= MAX_STERRING;
+         if(Keyboard::getInstance().down() && player->position.y <= SCREEN_H - 20.0) 	p.y += MAX_STERRING;
+         if(Keyboard::getInstance().left() && player->position.x >= 21.0) 		p.x -= MAX_STERRING;
+         if(Keyboard::getInstance().right() && player->position.x <= SCREEN_W - 20.0) 	p.x += MAX_STERRING;
 
 	 player->setSterring(new Sterring(p, rotation));
 	 for(int i = 0; i < bots.size(); i++) {

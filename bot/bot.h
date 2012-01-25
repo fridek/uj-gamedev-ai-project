@@ -28,8 +28,13 @@ private:
     AIMap* map;
     
     Sterring *sterring;
+    void getSterring();
     
     void init();
+
+protected:
+    bool AI;
+    Bot* followed;
     
 public:
     slm::vec2 position;

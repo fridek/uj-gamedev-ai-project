@@ -28,6 +28,7 @@ public:
   list<Waypoint*> waypoints;
   Path(list<Waypoint*> w, AIMap_Node *s, AIMap_Node *e);
   void draw();
+  slm::vec2 getPosition(int fromStart);
 };
 
 #endif // PATH_H
