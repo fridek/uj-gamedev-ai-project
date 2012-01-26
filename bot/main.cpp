@@ -136,6 +136,12 @@ void checkCollected(Bot* bot) {
 }
 
 void chooseBehaviour(Bot* bot) {
+  if(bot->health == 0) {
+    //DEAD
+      bot->setFollow(NULL);
+      return;    
+  }
+  
   if(bot->health < 30) {
     for(int i = 0; i < collectables.size(); i++) {
       if(collectables[i]->type == Collectable::MEDKIT) {
@@ -155,8 +161,18 @@ void chooseBehaviour(Bot* bot) {
   }
   
   if(slm::distance(player->position, bot->position) < 100) {
-    // shoot
-    return;
+    if(bot->ammo > 0 && player->health > 0) {
+      bot->ammo--;
+      player->health--;
+      
+      bot->setFollow(NULL);
+      return;
+    }
+    
+    if(player->ammo > 0 && bot->health > 0) {
+      player->ammo--;
+      bot->health--;      
+    }
   }
   bot->setFollow(player);  
 }
@@ -192,6 +208,8 @@ int main(int argc, char **argv){
    al_start_timer(timer);
 
    player = new Player(slm::vec2(20,20));
+   player->health = 500;
+   player->ammo = 200;
    bots.push_back(player);    
    
    //opponent = new Bot(p, al_map_rgb(255, 0, 0));
@@ -235,7 +253,10 @@ int main(int argc, char **argv){
 	   chooseBehaviour(AIbots[i]);
 	 }
 	  for(int i = 0; i < AIbots.size(); i++) {
+	    if(AIbots[i]->followed != NULL)
 	      AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], AIbots[i]->followed);
+	    else
+	      AIbots[i]->currentPath = -1;
 	  }
 	 
 	 for(int i = 0; i < bots.size(); i++) {

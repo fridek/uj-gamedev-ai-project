@@ -56,12 +56,20 @@ Bot::~Bot() {}
 
 void Bot::render() {
   ostringstream ss;
-  ss << "h:" << health << " a:" << ammo;
   
-  al_draw_filled_circle(position.x, position.y, 20, color);
-  al_draw_filled_circle(nearestNode->position.x, nearestNode->position.y, 5, al_map_rgb(160, 160, 0));
-  al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, ss.str().c_str());
-  Pathfinding::getInstance().drawPath(currentPath);
+  if(health > 0) {
+    ss << "h:" << health << " a:" << ammo;
+    
+    al_draw_filled_circle(position.x, position.y, 20, color);
+    al_draw_filled_circle(nearestNode->position.x, nearestNode->position.y, 5, al_map_rgb(160, 160, 0));
+    al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, ss.str().c_str());
+    Pathfinding::getInstance().drawPath(currentPath);
+  } else {
+    ss << "DEAD";
+    
+    al_draw_filled_circle(position.x, position.y, 20, al_map_rgb(150,150,150));
+    al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, ss.str().c_str());    
+  }
 }
 
 void Bot::setMap(AIMap* m) {
