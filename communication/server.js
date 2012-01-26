@@ -74,11 +74,11 @@ process.stdin.on('data', function (chunk) {
   
   for(var i = 0; i<clients.length;i++) {
     if(clients[i] && clients[i].socket_in) {
-      if(chunk == 'medkit') {
+      if(chunk == 'm') {
 	console.log("sending medkit");
 	clients[i].socket_in.write(JSON.stringify({type: "collectable", subtype: 0, amount: 50, x:x, y:y}) + '\0');
       }
-      if(chunk == 'weapon') {
+      if(chunk == 'w') {
 	console.log("sending weapon");
 	clients[i].socket_in.write(JSON.stringify({type: "collectable", subtype: 1, amount: 50, x:x, y:y}) + '\0');
       }      

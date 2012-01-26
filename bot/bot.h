@@ -36,7 +36,7 @@ protected:
     bool AI;
    
 public:
-
+    bool dead;
   
     int health;
     int ammo;

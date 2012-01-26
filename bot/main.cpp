@@ -136,44 +136,74 @@ void checkCollected(Bot* bot) {
 }
 
 void chooseBehaviour(Bot* bot) {
-  if(bot->health == 0) {
+  if(bot->health <= 0) {
     //DEAD
       bot->setFollow(NULL);
+      bot->dead = true;
       return;    
   }
-  
-  if(bot->health < 30) {
-    for(int i = 0; i < collectables.size(); i++) {
-      if(collectables[i]->type == Collectable::MEDKIT) {
-	bot->setFollow(collectables[i]);
-	return;
-      }
-    }      
-  }
-  
-  if(bot->ammo == 0) {
-    for(int i = 0; i < collectables.size(); i++) {
-      if(collectables[i]->type == Collectable::WEAPON) {
-	AIbots[i]->setFollow(collectables[i]);
-	return;
-      }
-    }
-  }
-  
+
   if(slm::distance(player->position, bot->position) < 100) {
     if(bot->ammo > 0 && player->health > 0) {
       bot->ammo--;
       player->health--;
-      
-      bot->setFollow(NULL);
-      return;
     }
     
     if(player->ammo > 0 && bot->health > 0) {
       player->ammo--;
       bot->health--;      
     }
+  }  
+  
+  if(bot->health < 30) {
+    Collectable *nearest = NULL;
+    
+    for(int i = 0; i < collectables.size(); i++) {
+      if(collectables[i]->type == Collectable::MEDKIT) {
+	if(nearest == NULL) {
+	  nearest = collectables[i];
+	  continue;
+	}
+	if(slm::distance(bot->position, collectables[i]->nearestNode->position) < 
+	  slm::distance(bot->position, nearest->nearestNode->position)) {
+	  nearest = collectables[i];
+	}
+      }
+    } 
+    if(nearest != NULL) {
+      bot->setFollow(nearest);
+      return;
+    }
   }
+  
+  if(bot->ammo <= 10) {
+    Collectable *nearest = NULL;
+    
+    for(int i = 0; i < collectables.size(); i++) {
+      if(collectables[i]->type == Collectable::WEAPON) {
+	if(nearest == NULL) {
+	  nearest = collectables[i];
+	  continue;
+	}
+	if(slm::distance(bot->position, collectables[i]->nearestNode->position) < 
+	  slm::distance(bot->position, nearest->nearestNode->position)) {
+	  nearest = collectables[i];
+	}
+      }
+    } 
+    if(nearest != NULL) {
+      bot->setFollow(nearest);
+      return;
+    }
+  }
+  
+  if(slm::distance(player->position, bot->position) < 100) {
+    if(bot->ammo > 0 && player->health > 0) {
+      bot->setFollow(NULL);
+    }
+    return;
+  }
+  
   bot->setFollow(player);  
 }
 

@@ -50,6 +50,8 @@ void Bot::init() {
   
   health = 100;
   ammo = 50;
+  
+  dead = false;
 }
 
 Bot::~Bot() {}
@@ -87,6 +89,7 @@ void Bot::setSterring(Sterring *s)
 
 
 void Bot::findNearestNode() {
+  if(dead) return;
     float minDist = map->size.x*map->size.y;
     
     for(int i = 0; i < map->graphNodes.size(); i++) {
@@ -105,6 +108,7 @@ void Bot::getSterring()
 
 
 void Bot::updatePosition(float time) {
+  if(dead) return;
   if(AI) getSterring();
   
   position += velocity * time;
