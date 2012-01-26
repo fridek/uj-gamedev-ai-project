@@ -4,6 +4,8 @@
 
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 
 #include <slm/vec2.h>
 
@@ -17,6 +19,8 @@
 #define FRICTION 2.0
 
 #define INF 4294967295
+
+ALLEGRO_FONT *font;
 
 #include "../communication/aigameclient.cpp"
 #include "sterring.cpp"
@@ -43,9 +47,9 @@ float randf() {
 
 vector<Bot*> bots;
 vector<Bot*> AIbots;
-vector<Collectable*> collectables;
 Player *player;
 
+vector<Collectable*> collectables;
 AIMap AImap;
 int pathID;
    
@@ -58,17 +62,13 @@ void recievePosition(int player_id, float x, float y) {
     //redraw = true;
 }
 
-void recieveCollectable(string type, int amount, float x, float y) {
+void recieveCollectable(int type, int amount, float x, float y) {
   cout << "====================================================================================================" << endl;
   cout << "collectable: " << type << "(" << amount << ") on (" << x << "," << y << ")" << endl;
   cout << "====================================================================================================" << endl;
   
   Collectable* c = new Collectable(type, amount, slm::vec2(x,y), &AImap);
   collectables.push_back(c);
-  
-  for(int i = 0; i < bots.size(); i++) {
-      if(rand()%3==0) bots[i]->setFollow(c);
-  }  
 }
 
 /**
@@ -122,6 +122,45 @@ void recieveMap(int map_size_x, int map_size_y, vector<AIGameClient_Obstacle> &o
   initialized = true;
 }
 
+void checkCollected(Bot* bot) {
+  for(int i = 0; i < collectables.size(); i++) {
+    if(collectables[i]->nearestNode->position == bot->nearestNode->position) {
+      if(collectables[i]->type == Collectable::MEDKIT) {
+	bot->health += collectables[i]->amount;
+      } else if(collectables[i]->type == Collectable::WEAPON) {
+	bot->ammo += collectables[i]->amount;
+      }
+      collectables.erase(collectables.begin() + i);
+    }
+  }
+}
+
+void chooseBehaviour(Bot* bot) {
+  if(bot->health < 30) {
+    for(int i = 0; i < collectables.size(); i++) {
+      if(collectables[i]->type == Collectable::MEDKIT) {
+	bot->setFollow(collectables[i]);
+	return;
+      }
+    }      
+  }
+  
+  if(bot->ammo == 0) {
+    for(int i = 0; i < collectables.size(); i++) {
+      if(collectables[i]->type == Collectable::WEAPON) {
+	AIbots[i]->setFollow(collectables[i]);
+	return;
+      }
+    }
+  }
+  
+  if(slm::distance(player->position, bot->position) < 100) {
+    // shoot
+    return;
+  }
+  bot->setFollow(player);  
+}
+
 int main(int argc, char **argv){
    initialized = false;
   
@@ -140,6 +179,11 @@ int main(int argc, char **argv){
    
    al_init_primitives_addon();
    al_install_keyboard();
+   al_init_font_addon(); // initialize the font addon
+   al_init_ttf_addon();// initialize the ttf (True Type Font) addon
+   
+   font = al_load_ttf_font("pirulen.ttf",20,0 );
+   
    
    al_register_event_source(event_queue, al_get_display_event_source(display));
    al_register_event_source(event_queue, al_get_timer_event_source(timer));
@@ -174,14 +218,30 @@ int main(int argc, char **argv){
          if(Keyboard::getInstance().left() && player->position.x >= 21.0) 		p.x -= MAX_STERRING;
          if(Keyboard::getInstance().right() && player->position.x <= SCREEN_W - 20.0) 	p.x += MAX_STERRING;
 
+	 if(Keyboard::getInstance().key[Keyboard::KEY_1]) {
+	   for(int i = 0; i < bots.size(); i++) bots[i]->health--;
+	 }
+	 if(Keyboard::getInstance().key[Keyboard::KEY_2]) {
+	   for(int i = 0; i < bots.size(); i++) bots[i]->ammo--;
+	 }
+	 
+	 /*
+	  * Behaviours
+	  */
 	 player->setSterring(new Sterring(p, rotation));
+	 
+	 for(int i = 0; i < AIbots.size(); i++) {
+	   checkCollected(AIbots[i]);
+	   chooseBehaviour(AIbots[i]);
+	 }
+	  for(int i = 0; i < AIbots.size(); i++) {
+	      AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], AIbots[i]->followed);
+	  }
+	 
 	 for(int i = 0; i < bots.size(); i++) {
 	    bots[i]->updatePosition(1.0 / FPS);
 	 }
 
-	  for(int i = 0; i < AIbots.size(); i++) {
-	     AIbots[i]->currentPath = Pathfinding::getInstance().follow(AIbots[i], AIbots[i]->followed);
-	  }
 	 if(++serverCounter % FPS == 0) client->sendPosition(player->position.x, player->position.y);
 
 	  

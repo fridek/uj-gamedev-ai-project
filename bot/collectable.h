@@ -24,13 +24,15 @@ class Collectable:public Followable, public Renderable
 {
 
 public:
-    string type;
+    enum {MEDKIT, WEAPON};
+  
+    int type;
     int amount;
     slm::vec2 position;
     
     AIMap_Node* nearestNode;
     
-    Collectable(string t, int a, slm::vec2 p, AIMap* map);
+    Collectable(int t, int a, slm::vec2 p, AIMap* map);
     
     void render();
     AIMap_Node* getNearestNode();

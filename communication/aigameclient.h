@@ -28,7 +28,7 @@ struct AIGameClient_Obstacle {
 #include "NodejsClient.cpp"
 
 typedef void (*handlerRecievePositionType)(int, float, float);
-typedef void (*handlerRecieveCollectableType)(string, int, float, float);
+typedef void (*handlerRecieveCollectableType)(int, int, float, float);
 /**
  * @param map_size_x int
  * @param map_size_y int

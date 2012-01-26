@@ -17,6 +17,7 @@
 */
 
 #include "bot.h"
+#include "../communication/boost/concept_check.hpp"
 
 Bot::Bot() {
   position.x = 20;
@@ -46,13 +47,20 @@ void Bot::init() {
   rotation = 0;
   
   sterring = new Sterring(slm::vec2(0,0), 0);
+  
+  health = 100;
+  ammo = 50;
 }
 
 Bot::~Bot() {}
 
 void Bot::render() {
+  ostringstream ss;
+  ss << "h:" << health << " a:" << ammo;
+  
   al_draw_filled_circle(position.x, position.y, 20, color);
   al_draw_filled_circle(nearestNode->position.x, nearestNode->position.y, 5, al_map_rgb(160, 160, 0));
+  al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, ss.str().c_str());
   Pathfinding::getInstance().drawPath(currentPath);
 }
 

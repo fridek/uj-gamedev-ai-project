@@ -34,10 +34,16 @@ private:
 
 protected:
     bool AI;
-    AIMap_Node* nearestNode;     
+   
 public:
-    Followable* followed;
+
   
+    int health;
+    int ammo;
+  
+    Followable* followed;
+    AIMap_Node* nearestNode; 
+    
     slm::vec2 position;
     float orientation;
     slm::vec2 velocity;    

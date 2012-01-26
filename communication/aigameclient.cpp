@@ -68,7 +68,7 @@ void AIGameClient::handleMessage(char* a) {
 	);
    
     } else if(type.compare("collectable") == 0) {
-	AIGameClient::getInstance()->recieveCollectableHandler(json["subtype"].GetString(), json["amount"].GetInt(), json["x"].GetInt(), json["y"].GetInt());
+	AIGameClient::getInstance()->recieveCollectableHandler(json["subtype"].GetInt(), json["amount"].GetInt(), json["x"].GetInt(), json["y"].GetInt());
     }
   }
 };

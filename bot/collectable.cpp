@@ -19,7 +19,7 @@
 
 #include "collectable.h"
 
-Collectable::Collectable(string t, int a, slm::vec2 p, AIMap* map)
+Collectable::Collectable(int t, int a, slm::vec2 p, AIMap* map)
 {
   type = t;
   amount = a;
@@ -34,12 +34,14 @@ Collectable::Collectable(string t, int a, slm::vec2 p, AIMap* map)
       nearestNode = map->graphNodes[i];
     }      
   }
+  position = nearestNode->position;
 }
 
 void Collectable::render()
 {
   al_draw_filled_circle(position.x, position.y, 20, al_map_rgb(255,0,255));
-  al_draw_filled_circle(nearestNode->position.x, nearestNode->position.y, 5, al_map_rgb(160, 160, 0));
+  if(type == Collectable::MEDKIT) al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, "MEDKIT");
+  if(type == Collectable::WEAPON) al_draw_text(font, al_map_rgb(0, 0, 0), position.x, position.y - 30, ALLEGRO_ALIGN_CENTRE, "WEAPON");
 }
 
 AIMap_Node* Collectable::getNearestNode()
